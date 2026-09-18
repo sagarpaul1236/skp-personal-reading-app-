@@ -413,6 +413,15 @@ body.dark .predator-drop.filled{background:#173548}
 .dashboard-home .test-card.topic-card .bookmark-btn{z-index:4}
 @media(max-width:620px){.dashboard-home .test-card.topic-card{background-size:cover,68% 100%;background-position:center,right center}}
 </style>
+
+<style>
+/* Responsive cleanup: do not show the narrow sidebar/vertical rail on phone/tablet desktop-mode widths. */
+@media (max-width:1050px){
+  .dashboard-home .dash-shell{grid-template-columns:minmax(0,1fr)!important;}
+  .dashboard-home .dash-sidebar{display:none!important;}
+  .dash-main{width:100%!important;min-width:0!important;}
+}
+</style>
 </head>
 <body>
 <header id="topbar" class="topbar">
@@ -445,7 +454,6 @@ body.dark .predator-drop.filled{background:#173548}
         <button class="side-nav-item" id="navProgress" type="button"><span>▥</span> My Progress</button>
         <button class="side-nav-item" id="navBookmarks" type="button"><span>★</span> Bookmarks <b id="navBookmarkCount">0</b></button>
         <button class="side-nav-item" id="navSettings" type="button"><span>⚙</span> Settings</button>
-        <button class="side-nav-item" id="navHelp" type="button"><span>?</span> Help Center</button>
       </nav>
       <div class="side-motivation">
         <div class="motif-target">◎</div>
@@ -1301,8 +1309,6 @@ function openDashModal(kind){
   } else if(kind==="bookmarks"){
     const rows=TESTS.filter(t=>books.map(String).includes(String(t.id))).map(t=>`<button type="button" data-open-test="${esc(t.id)}">★ TEST ${String(TESTS.indexOf(t)+1).padStart(2,"0")} — ${esc(t.title)}</button>`).join("");
     content.innerHTML=`<h3>Bookmarked Tests</h3><p style="color:#71869a;font-size:11px">Tap a test below to choose your time and start.</p><div class="modal-list">${rows||'<div style="color:#71869a;font-size:11px">No bookmarks yet. Use ☆ on a test card to save one.</div>'}</div>`;
-  } else if(kind==="help"){
-    content.innerHTML=`<h3>Help Center</h3><p style="color:#71869a;font-size:12px;line-height:1.6">কোনো কিছু জানতে, সমস্যা জানাতে বা সাহায্য চাইতে নিচের বাটনে চাপ দিন। আপনার ইমেইল অ্যাপ খুলে যাবে এবং সরাসরি আমাদের কাছে মেসেজ পাঠাতে পারবেন।</p><div style="padding:16px;border:1px solid #dbe7ef;border-radius:14px;background:#f7fbfd;margin:12px 0"><strong style="display:block;margin-bottom:6px">Email Support</strong><span style="color:#496170;font-size:12px">sagarpaulsagar07@gmail.com</span></div><a href="mailto:sagarpaulsagar07@gmail.com?subject=Help%20Center%20-%20IELTS%20Learn%20With%20SKP" style="display:block;text-align:center;text-decoration:none;border-radius:12px;padding:12px 14px;background:#0d3552;color:#fff;font-weight:900">✉ Send Message by Email</a>`;
   } else {
     content.innerHTML=`<h3>Settings</h3><div class="setting-row"><span>Dark theme</span><button id="modalTheme">${document.body.classList.contains("dark")?"Light":"Dark"}</button></div><div class="setting-row"><span>Saved progress</span><button id="resetProgress" class="danger-btn">Reset progress</button></div><div class="setting-row"><span>About</span><span>IELTS Learn With SKP</span></div>`;
     $("#modalTheme").onclick=()=>{document.body.classList.toggle("dark");$("#modalTheme").textContent=document.body.classList.contains("dark")?"Light":"Dark";localStorage.setItem("skp_dark",document.body.classList.contains("dark")?"1":"0");};
@@ -1318,7 +1324,6 @@ function initDashboard(){
   $("#navProgress").onclick=()=>openDashModal("progress");
   $("#navBookmarks").onclick=()=>openDashModal("bookmarks");
   $("#navSettings").onclick=()=>openDashModal("settings");
-  $("#navHelp").onclick=()=>openDashModal("help");
   if($("#dashTheme")) $("#dashTheme").onclick=()=>{document.body.classList.toggle("dark");localStorage.setItem("skp_dark",document.body.classList.contains("dark")?"1":"0")};
   $("#searchInput").oninput=e=>renderLibrary(e.target.value);
   document.querySelectorAll(".filter-tab").forEach(btn=>btn.onclick=()=>{dashboardFilter=btn.dataset.filter;document.querySelectorAll(".filter-tab").forEach(x=>x.classList.toggle("active",x===btn));renderLibrary($("#searchInput").value)});
@@ -1332,11 +1337,58 @@ updateRecentCount();
 renderLibrary();
 show("#libraryView");
 </script>
+
+<!-- IELTS Learn With SKP: Help -->
+<style>
+#skp-help-btn{position:fixed;right:14px;bottom:14px;z-index:10000;border:0;border-radius:999px;padding:11px 18px;background:#0d3552;color:#fff;font-weight:700;box-shadow:0 5px 18px rgba(0,0,0,.18);cursor:pointer}
+#skp-help-overlay{display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.45);padding:20px;align-items:center;justify-content:center}
+#skp-help-box{width:min(520px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:22px;box-shadow:0 15px 50px rgba(0,0,0,.25);font-family:inherit}
+#skp-help-box h2{margin:0 0 8px;color:#0d3552}
+#skp-help-box p{margin:0 0 14px}
+#skp-help-message{width:100%;min-height:130px;box-sizing:border-box;border:1px solid #cbd5df;border-radius:10px;padding:12px;font:inherit;resize:vertical}
+.skp-help-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+.skp-help-actions button{border:0;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer}
+#skp-help-send{background:#0d3552;color:#fff}.skp-help-close{background:#e9eef2;color:#203040}
+#skp-help-status{margin-top:10px;font-size:14px}
+</style>
+<button id="skp-help-btn" type="button" aria-label="Help">Help</button>
+<div id="skp-help-overlay" role="dialog" aria-modal="true" aria-labelledby="skp-help-title">
+  <div id="skp-help-box">
+    <h2 id="skp-help-title">Help</h2>
+    <p>কোনো সমস্যা হলে নিচে আপনার মেসেজ লিখে Send Message চাপুন।</p>
+    <textarea id="skp-help-message" placeholder="আপনার সমস্যাটি লিখুন..."></textarea>
+    <div class="skp-help-actions">
+      <button class="skp-help-close" id="skp-help-close" type="button">Close</button>
+      <button id="skp-help-send" type="button">Send Message</button>
+    </div>
+    <div id="skp-help-status" aria-live="polite"></div>
+  </div>
+</div>
 <script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(() => {}));
-}
+(function(){
+  const btn=document.getElementById('skp-help-btn');
+  const overlay=document.getElementById('skp-help-overlay');
+  const close=document.getElementById('skp-help-close');
+  const send=document.getElementById('skp-help-send');
+  const msg=document.getElementById('skp-help-message');
+  const status=document.getElementById('skp-help-status');
+  function openHelp(){overlay.style.display='flex';status.textContent='';setTimeout(()=>msg.focus(),50)}
+  function closeHelp(){overlay.style.display='none'}
+  btn.addEventListener('click',openHelp);
+  close.addEventListener('click',closeHelp);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)closeHelp()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeHelp()});
+  send.addEventListener('click',function(){
+    const text=msg.value.trim();
+    if(!text){status.textContent='মেসেজ লিখুন।';msg.focus();return}
+    const subject=encodeURIComponent('IELTS Learn With SKP - Help Request');
+    const body=encodeURIComponent(text+'\n\nSent from IELTS Learn With SKP');
+    window.location.href='mailto:sagarpaulsagar07@gmail.com?subject='+subject+'&body='+body;
+    status.textContent='আপনার Email app খোলার কথা। সেখানে Send চাপুন।';
+  });
+})();
 </script>
+
 </body>
 </html>
 
